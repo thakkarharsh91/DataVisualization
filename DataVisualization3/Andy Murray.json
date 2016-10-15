@@ -1,0 +1,14 @@
+[
+{Year:'2003',freq:{fastServe:200, AverageFirstServe:180, AverageSecondServe:136}}
+,{Year:'2004',freq:{fastServe:205, AverageFirstServe:180, AverageSecondServe:136}}
+,{Year:'2005',freq:{fastServe:212, AverageFirstServe:176, AverageSecondServe:152}}
+,{Year:'2006',freq:{fastServe:212, AverageFirstServe:181, AverageSecondServe:154}}
+,{Year:'2007',freq:{fastServe:213, AverageFirstServe:193, AverageSecondServe:152}}
+,{Year:'2008',freq:{fastServe:207, AverageFirstServe:186, AverageSecondServe:148}}
+,{Year:'2009',freq:{fastServe:209, AverageFirstServe:189, AverageSecondServe:157}}
+,{Year:'2010',freq:{fastServe:209, AverageFirstServe:188, AverageSecondServe:153}}
+,{Year:'2011',freq:{fastServe:209, AverageFirstServe:188, AverageSecondServe:160}}
+,{Year:'2012',freq:{fastServe:212, AverageFirstServe:190, AverageSecondServe:159}}
+,{Year:'2013',freq:{fastServe:218, AverageFirstServe:195, AverageSecondServe:155}}
+];
+

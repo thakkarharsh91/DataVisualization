@@ -1,0 +1,73 @@
+<html>
+<head>
+<style>
+.the-posts article a.post-title {
+	top: 50%;
+    position: absolute;
+	text-align: center;
+    display: inline-block;
+    
+    font-weight: bold;
+    
+    font-family: arial, helvetica;
+    
+    text-decoration: none;
+    
+    font-size: 29px;
+    overflow:hidden;
+}
+
+
+.the-posts article a.post-title::before {
+	top: 50%;
+    display: inline-block;
+	text-align: center;
+    position: absolute;
+
+    top: 0;
+
+    left: 0;
+
+    overflow: hidden;
+
+    padding: 0;
+
+    max-width: 0;
+
+    color: #808080;
+
+    content: attr(data-hover);
+
+    -webkit-transition: max-width 0.5s;
+
+    -moz-transition: max-width 0.5s;
+
+    transition: max-width 0.5s;
+
+}
+
+.the-posts article a.post-title:hover::before, .the-posts article a.post-title:focus::before {
+	text-align: center;
+    max-width: 100%;
+
+}
+
+.wrapper {
+    text-align: center;
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<div id="content" class="small-12 columns the-posts">
+    <article id="post-162" class="post-162 post type-post status-publish format-standard hentry category-uncategorized row">	
+	<a href="histogram.html" rel="bookmark" title="Histogram" class="post-title" data-hover="Histogram">Histogram</a>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+	<a href="piechart.html" rel="bookmark" title="Piechart" class="post-title" data-hover="Piechart">Piechart</a>
+
+    </article>
+</div>
+</div>
+
+</body>
+</html>

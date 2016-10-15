@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Histograms</title>
+    
+    <script type="text/javascript" src="http://mbostock.github.com/d3/d3.js"></script>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+    <style type="text/css">
+
+        svg {
+            font: 11px sans-serif;
+        }
+
+        .bar {
+            stroke: white;
+            fill: Blue;
+
+        }
+
+        .axis path, .axis line {
+            fill: none;
+            stroke: #000;
+            shape-rendering: crispEdges;
+        }
+
+        rect.mover {
+            stroke: lightSteelBlue;
+            stroke-opacity: 0.3;
+            fill: SteelBlue;
+            fill-opacity: 0.5;
+        }
+		
+		.d3-tip {
+        line-height: 1;
+        font-weight: bold;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        border-radius: 2px;
+      }
+	  
+      .bar rect {
+        fill: steelblue;
+        shape-rendering: crispEdges;
+      }
+	  
+      .bar rect:hover{
+        fill: rgba(0,0,0,.8);
+      }
+	  
+      .axis path, .axis line {
+        fill: none;
+        stroke: #000;
+        shape-rendering: crispEdges;
+      }
+	    
+	#chart {
+        height: 360px;
+        margin: 0 auto;                                               
+        position: relative;
+        width: 360px;
+      }
+      .tooltip {
+        background: #eee;
+        box-shadow: 0 0 5px #999999;
+        color: #333;
+        display: none;
+        font-size: 12px;
+        left: 130px;
+        padding: 10px;
+        position: absolute;
+        text-align: center;
+        top: 95px;
+        width: 80px;
+        z-index: 10;
+      }
+      .legend {
+        font-size: 12px;
+      }
+      rect {
+        cursor: pointer;                                              
+        stroke-width: 2;
+      }
+      rect.disabled {                                                 
+        fill: transparent !important;                                 
+      }                                                               
+      h1 {                                                            
+        font-size: 14px;                                              
+        text-align: center;                                           
+      }
+	  
+	  
+</style>
+</head>
+<body>
+
+<table>
+<tr>
+<td><a href="index.html">Back</a></td>
+</tr>
+<tr><td><h4>Histogram with bar drag</h4></td></tr>
+<tr><td><h5>Clicks info by all users</h5></td></tr>
+<tr>
+
+<td>
+    <div id="diagram">
+	<script type="text/javascript">
+
+        d3.csv("class_query.csv", function (data) {
+
+			var info = [];
+			var counts = {};
+			data.forEach(function(r)
+			{
+				var key = r.u_id;
+					if(!counts[key])
+					{
+						counts[key] = {
+							label: r.u_id,
+							value: 0
+						};
+					}
+					counts[key].value++;
+					
+			});				
+			
+			Object.keys(counts).forEach(function(key) 
+			{
+				info.push(counts[key]);
+			});
+			
+			function sortBy(key, reverse) {
+
+				var moveSmaller = reverse ? 1 : -1;
+				var moveLarger = reverse ? -1 : 1;
+
+				return function(a, b) {
+					if (a[key] < b[key]) {
+					return moveSmaller;
+				}
+				if (a[key] > b[key]) {
+					return moveLarger;
+				}
+				return 0;
+				};
+			}
+			var sortedObjs = info.sort(sortBy('value'));
+			var items = JSON.stringify(sortedObjs);
+	
+			var abc = ConvertToCSV(items);
+			
+			function ConvertToCSV(objArray) {
+				var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+				var str = '';
+
+				for (var i = 0; i < array.length; i++) {
+					var line = '';
+					for (var index in array[i]) {
+						if (line != '') line += ','
+						line += array[i][index];
+                }
+                str += line + '\r\n';
+            }
+            return str;
+        }
+		
+		var userid = []
+		var countinfo = []
+		var items = []
+		for(j=0;j<abc.length;j++){
+			var res = abc.split('\n');
+			if (typeof res[j] != 'undefined'){
+				items = res[j].split(",");
+				if(items!="")
+					userid.push(items[0]);
+					countinfo.push(items[1]);
+			}
+		}
+		
+
+        var margin =  {top: 20, right: 20, bottom: 20, left: 60},
+            selectorHeight = 20
+            width = 400 - margin.left - margin.right,
+            height = 300 - margin.top - margin.bottom - selectorHeight,
+            barWidth = 45;
+
+        var numBars = Math.round(width/barWidth);
+		
+        var xscale = d3.scale.ordinal()
+                .domain(userid.slice(0,numBars))
+                .rangeBands([0, width]),
+            yscale = d3.scale.linear()
+                .domain([0, 60])
+                .range([height, 0]);
+		
+        var xAxis  = d3.svg.axis().scale(xscale).orient("bottom"),
+            yAxis  = d3.svg.axis().scale(yscale).orient("left");
+
+        var svg = d3.select("#diagram").append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom + selectorHeight);
+
+        var diagram = svg.append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        diagram.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0, " + height + ")")
+                .call(xAxis);
+		
+		svg.append("text")
+		   .attr("class", "xlabel")
+	       .attr("text-anchor", "middle")
+	       .attr("x", width/1.5)
+	       .attr("y", height + margin.bottom + 35)
+	       .text("User Ids");
+
+        diagram.append("g")
+                .attr("class", "y axis")
+                .call(yAxis);
+				
+		diagram.append("text")
+	       .attr("class", "ylabel")
+	       .attr("y", 0 - margin.left) 
+	       .attr("x", 0 - (height / 2))
+	       .attr("dy", "1em")
+	       .attr("transform", "rotate(-90)")
+	       .style("text-anchor", "middle")
+	       .text("Clicks");
+
+        var bars = diagram.append("g");
+
+        bars.selectAll("rect")
+            .data(info.slice(0, numBars), function (d) {return d.label; })
+            .enter().append("rect")
+            .attr("class", "bar")
+            .attr("x", function (d) { return xscale(d.label); })
+            .attr("y", function (d) { return yscale(d.value); })
+            .attr("width", xscale.rangeBand())
+            .attr("height", function (d) { return height - yscale(d.value); });
+
+        var displayed = d3.scale.quantize()
+            .domain([0, width])
+            .range(d3.range(info.length));
+
+        diagram.append("rect")
+            .attr("transform", "translate(0, " + (height + margin.bottom) + ")")
+            .attr("class", "mover")
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("height", selectorHeight)
+            .attr("width", Math.round(parseFloat(numBars * width)/info.length))
+            .attr("pointer-events", "all")
+            .attr("cursor", "ew-resize")
+            .call(d3.behavior.drag().on("drag", display));
+
+        function display () {
+            var x = parseInt(d3.select(this).attr("x")),
+                nx = x + d3.event.dx,
+                w = parseInt(d3.select(this).attr("width")),
+                f, nf, new_data, rects;
+
+            if ( nx < 0 || nx + w > width ) return;
+
+            d3.select(this).attr("x", nx);
+
+            f = displayed(x);
+            nf = displayed(nx);
+
+            if ( f === nf ) return;
+
+            new_data = info.slice(nf, nf + numBars);
+			
+            xscale.domain(new_data.map(function (d) { return d.label; }));
+            diagram.select(".x.axis").call(xAxis);
+
+            rects = bars.selectAll("rect")
+                .data(new_data, function (d) {return d.label; });
+
+            rects.attr("x", function (d) { return xscale(d.label); });
+
+            rects.enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", function (d) { return xscale(d.label); })
+                .attr("y", function (d) { return yscale(d.value); })
+                .attr("width", xscale.rangeBand())
+                .attr("height", function (d) { return height - yscale(d.value); });
+
+            rects.exit().remove();
+        };
+});
+    </script>
+	</div>
+	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;===>
+	
+	</td>
+	<td>
+	<h4>Analysis and Findings</h4>
+	<li type="disc">For the histogram shown in left, the file class_query.csv is taken as input file. The file has different type of inputs as timestamp, intention, query terms and user id.
+	<li type="disc">Nowadays IT companies all around the world try to maximize the user interaction with the website and thus gathering the user data. The class query file is about the users (particularly user IDs) and their clicks for a particular website.
+	<li type="disc">The left side of the histogram focuses on the same feature where the x axis represnts the user IDs and the left side focuses on the Clicks performed by all the users.
+	<li type="disc">Since there are more than 50 users in the input data, presenting them in the simple histogram was not an option so there is an interactivity provided in the histogram where the user can drag the bar from left to right and can see all the user ids and their respective clicks.
+	<li type="disc">For more proper visualization, the bars are dispalyed in the ascending order of the clicks.
+	<ul type="disc">With this histogram visualization, the following findings can be deduced :
+	<li type="circle">Users with less than 10 clicks = 38 users (60%)
+	<li type="circle">Users with less than 20 clicks and greater than 10 = 38 users (25%)
+	<li type="circle">Users with greater than 20 clicks = 16 users (15%)
+	</ul>
+	</td>
+	</tr>
+	<tr>
+          <td colspan="3"><hr/></td>
+    </tr>
+	<tr><td><h4>Histogram with mouse hover</h4></td></tr>
+	<tr><td><h5>Intention with their clicks count by users</h5></td></tr>
+	<tr>
+	<td>
+	<div id = "interactive">
+	<script>
+
+function parser(d) {
+    d.pCount = +d.Count;
+    return d;
+}
+
+function exploreData(csvdata) {
+	
+    var binsize = 2;
+    var minbin = 0;
+    var maxbin = 60;
+    var numbins = (maxbin - minbin) / binsize;
+
+    var binmargin = .2; 
+    var margin = {top: 10, right: 30, bottom: 50, left: 60};
+    var width = 450 - margin.left - margin.right;
+    var height = 250 - margin.top - margin.bottom;
+
+    var xmin = minbin - 1
+    var xmax = maxbin + 1
+
+    histdata = new Array(numbins);
+    for (var i = 0; i < numbins; i++) {
+		histdata[i] = { numfill: 0, meta: "" };
+	}
+	
+	for(j=0;j<csvdata.length;j++){
+		var res = csvdata.split('\n');
+		if (typeof res[j] != 'undefined'){
+			var items = res[j].split(",");
+		}
+		
+		
+		var bin = Math.floor((items[2] - minbin) / binsize);
+		if ((bin.toString() != "NaN") && (bin < histdata.length)) {
+			histdata[bin].numfill += 1;
+			histdata[bin].meta += "<tr><td>" + items[0] +
+				" " + items[1] + 
+				"</td><td>" + 
+				items[2] + "</td></tr>";
+		}
+	}
+
+    var x = d3.scale.linear()
+	  .domain([0, (xmax - xmin)])
+	  .range([0, width]);
+
+    var x2 = d3.scale.linear()
+	  .domain([xmin, xmax])
+	  .range([0, width]);
+	
+    var y = d3.scale.linear()
+	  .domain([0, 60])
+	  .range([height, 0]);
+
+    var xAxis = d3.svg.axis()
+	  .scale(x2)
+	  .orient("bottom");
+	  
+    var yAxis = d3.svg.axis()
+	  .scale(y)
+	  .ticks(8)
+	  .orient("left");
+
+    var tip = d3.tip()
+	  .attr('class', 'd3-tip')
+	  .direction('e')
+	  .offset([0, 20])
+	  .html(function(d) {
+	    return '<table id="tiptable">' + d.meta + "</table>";
+	});
+
+    var svg = d3.select("#CountData").append("svg")
+	  .attr("width", width + margin.left + margin.right)
+	  .attr("height", height + margin.top + margin.bottom)
+	  .append("g")
+	  .attr("transform", "translate(" + margin.left + "," + 
+						margin.top + ")");
+
+    svg.call(tip);
+
+    var bar = svg.selectAll(".bar")
+	  .data(histdata)
+	  .enter().append("g")
+	  .attr("class", "bar")
+	  .attr("transform", function(d, i) { return "translate(" + 
+	       x2(i * binsize + minbin) + "," + y(d.numfill) + ")"; })
+	  .on('mouseover', tip.show)
+	  .on('mouseout', tip.hide);
+
+    bar.append("rect")
+	  .attr("x", x(binmargin))
+	  .attr("width", x(binsize - 2 * binmargin))
+	  .attr("height", function(d) { return height - y(d.numfill); });
+
+    svg.append("g")
+	  .attr("class", "x axis")
+	  .attr("transform", "translate(0," + height + ")")
+	  .call(xAxis);
+	  
+    svg.append("text")
+	  .attr("class", "xlabel")
+	  .attr("text-anchor", "middle")
+	  .attr("x", width / 2)
+	  .attr("y", height + margin.bottom - 5)
+	  .text("Clicks Range");
+
+    svg.append("g")
+	  .attr("class", "y axis")
+	  .attr("transform", "translate(0,0)")
+	  .call(yAxis);
+	 
+    svg.append("text")
+	  .attr("class", "ylabel")
+	  .attr("y", 0 - margin.left) 
+	  .attr("x", 0 - (height / 2))
+	  .attr("dy", "1em")
+	  .attr("transform", "rotate(-90)")
+	  .style("text-anchor", "middle")
+	  .text("Count");
+}
+
+d3.csv("class_query.csv", parser,
+       function(error, csvdata) {
+	   var csvInput = '';
+	   d3.csv("class_query.csv",function(data)
+		{
+			var info = [];
+			var counts = {};
+			data.forEach(function(r)
+			{
+				var key = r.u_id + r.intention;
+					if(!counts[key])
+					{
+						counts[key] = {
+							Uid: r.u_id,
+							Intention: r.intention,
+							count: 0
+						};
+					}
+					counts[key].count++;
+					
+			});				
+			
+			Object.keys(counts).forEach(function(key) 
+			{
+				info.push(counts[key]);
+			});
+			var items = JSON.stringify(info);
+			csvInput = ConvertToCSV(items);
+			
+			function ConvertToCSV(objArray) {
+				var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+				var str = '';
+
+				for (var i = 0; i < array.length; i++) {
+					var line = '';
+					for (var index in array[i]) {
+						if (line != '') line += ','
+						line += array[i][index];
+                }
+                str += line + '\r\n';
+            }
+            return str;
+        }	
+	
+	    exploreData(csvInput);
+		});
+		
+}); 
+    </script>
+	</div>
+    <div id="CountData" class="graph"></div>
+	</td>
+	<td><h4>Analysis and Findings</h4>
+	<li type="disc">For the histogram shown in left, the file class_query.csv is taken as input file. The file has different type of inputs as timestamp, intention, query terms and user id.
+	<li type="disc">This histogram is basically related to the number of clicks of each user along with the details of the intentions for each click.
+	<li type="disc">The x axis is the range of the clicks for all users where the y axis is the summation of the count of all the users falling in that particular range.
+	<li type="disc">The diagram is a simple bar chart but when the user hovers the mouse pointer over the bar strip, then he can visualize the user IDs followed by their intentions along with the count of clicks for that intention. The user can see all these details in the small window popup which opens on mouse hover.
+	<ul type="disc">With this histogram visualization, the following findings can be deduced :
+	<li type="circle">More than 50 users are present in the input data. But only few of them (A0067,A0073,A0061,A0046,A0029,A0005,B0007,A0066,A0021,A0025) clicked on all the intentions.
+	<li type="circle">Most of the users had KS as one of their intention while clicking the website.
+	<li type="circle">But the users having KS and NA as their intentions had more clicks for NA intention as compared to KS.
+	</ul></td>
+	</tr>
+
+	</table>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset="utf-8" />
+    <title>Piechart</title>
+   <link data-require="normalize@*" data-semver="3.0.1" rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/normalize/3.0.1/normalize.min.css" />
+    <style>
+      #chart {
+        height: 360px;
+        margin: 0 auto;                                               
+        position: relative;
+        width: 360px;
+		
+      }
+      .tooltip {
+        background: #eee;
+        box-shadow: 0 0 5px #999999;
+        color: #333;
+        display: none;
+        font: 11px sans-serif;
+        left: 130px;
+        padding: 10px;
+        position: absolute;
+        text-align: center;
+        top: 95px;
+        width: 80px;
+        z-index: 10;
+		
+      }
+      .legend {
+        font: 11px sans-serif;
+      }
+      rect {
+        cursor: pointer;                                              
+        stroke-width: 2;
+		
+      }
+      rect.disabled {                                                 
+        fill: transparent !important;    
+				
+      }                                                               
+      h4 {                                                            
+        text-align: center;      		
+      }                          
+
+	  h5 {                                                            
+        text-align: center;      		
+      }                          	  
+    </style>
+  </head>
+
+  <body>     
+	<a href="index.html"><p style="text-align:center">Back</p></a>  
+	<h4><font face="sans-serif">Interactive Pie chart</font></h4>
+	<h5><font face="sans-serif">Intentions click count</font></h5>
+	<table>
+	<tr><td></td><td>
+    <div id="chart"></div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3.min.js" data-semver="3.4.6" data-require="d3@*"></script>
+    <script>
+      (function(d3) {
+        'use strict';
+
+        var width = 360;
+        var height = 360;
+        var radius = Math.min(width, height) / 2;
+        var donutWidth = 75;
+        var legendRectSize = 18;
+        var legendSpacing = 4;
+
+        var color = d3.scale.category20b();
+
+        var svg = d3.select('#chart')
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height)
+          .append('g')
+          .attr('transform', 'translate(' + (width / 2) + 
+            ',' + (height / 2) + ')');
+
+        var arc = d3.svg.arc()
+          .innerRadius(radius - donutWidth)
+          .outerRadius(radius);
+
+        var pie = d3.layout.pie()
+          .value(function(d) { return d.count; })
+          .sort(null);
+
+        var tooltip = d3.select('#chart')
+          .append('div')
+          .attr('class', 'tooltip');
+        
+        tooltip.append('div')
+          .attr('class', 'label');
+
+        tooltip.append('div')
+          .attr('class', 'count');
+
+        tooltip.append('div')
+          .attr('class', 'percent');
+
+        d3.csv('class_query.csv', function(error, dataset) {
+			var info = [];
+			var counts = {};
+			dataset.forEach(function(r)
+			{
+				var key = r.intention;
+					if(!counts[key])
+					{
+						counts[key] = {
+							count: 0,
+							enabled: 'true',
+							label: r.intention
+						};
+					}
+					counts[key].count++;
+					
+			});				
+			
+			Object.keys(counts).forEach(function(key) 
+			{
+				info.push(counts[key]);
+			});
+			var items = JSON.stringify(info);
+		
+			var abc = ConvertToCSV(items);
+		
+		function ConvertToCSV(objArray) {
+				var array = typeof objArray != 'object' ? JSON.parse(objArray) : objArray;
+				var str = '';
+
+				for (var i = 0; i < array.length; i++) {
+					var line = '';
+					for (var index in array[i]) {
+						if (line != '') line += ','
+						line += array[i][index];
+                }
+                str += line + '\r\n';
+            }
+            return str;
+        }
+	
+          var path = svg.selectAll('path')
+            .data(pie(info))
+            .enter()
+            .append('path')
+            .attr('d', arc)
+            .attr('fill', function(d, i) { 
+              return color(d.data.label); 
+            })                                                        
+            .each(function(d) { this._current = d; });                
+
+          path.on('mouseover', function(d) {
+            var total = d3.sum(info.map(function(d) {
+              return (d.enabled) ? d.count : 0;                       
+            }));
+			
+            var percent = Math.round(1000 * d.data.count / total) / 10;
+            tooltip.select('.label').html(d.data.label);
+            tooltip.select('.count').html(d.data.count); 
+            tooltip.select('.percent').html(percent + '%'); 
+            tooltip.style('display', 'block');
+          });
+          
+          path.on('mouseout', function() {
+            tooltip.style('display', 'none');
+          });
+
+           
+          path.on('mousemove', function(d) {
+            tooltip.style('top', (d3.event.pageY - 100) + 'px')
+              .style('left', (d3.event.pageX - 100) + 'px');
+          });
+          
+            
+          var legend = svg.selectAll('.legend')
+            .data(color.domain())
+            .enter()
+            .append('g')
+            .attr('class', 'legend')
+            .attr('transform', function(d, i) {
+              var height = legendRectSize + legendSpacing;
+              var offset =  height * color.domain().length / 2;
+              var horz = -2 * legendRectSize;
+              var vert = i * height - offset;
+              return 'translate(' + horz + ',' + vert + ')';
+            });
+
+          legend.append('rect')
+            .attr('width', legendRectSize)
+            .attr('height', legendRectSize)                                   
+            .style('fill', color)
+            .style('stroke', color)                                   
+            .on('click', function(label) {                            
+              var rect = d3.select(this);                             
+              var enabled = true;                                     
+              var totalEnabled = d3.sum(info.map(function(d) {     
+                return (d.enabled) ? 1 : 0;                           
+              }));                                                    
+              
+              if (rect.attr('class') === 'disabled') {                
+                rect.attr('class', '');                               
+              } else {                                                
+                if (totalEnabled < 2) return;                         
+                rect.attr('class', 'disabled');                       
+                enabled = false;                                      
+              }                                                       
+
+              pie.value(function(d) {                                 
+                if (d.label === label) d.enabled = enabled;           
+                return (d.enabled) ? d.count : 0;                     
+              });                                                     
+
+              path = path.data(pie(info));                         
+
+              path.transition()                                       
+                .duration(750)                                        
+                .attrTween('d', function(d) {                         
+                  var interpolate = d3.interpolate(this._current, d); 
+                  this._current = interpolate(0);                     
+                  return function(t) {                                
+                    return arc(interpolate(t));                       
+                  };                                                  
+                });                                                   
+            });                                                       
+            
+          legend.append('text')
+            .attr('x', legendRectSize + legendSpacing)
+            .attr('y', legendRectSize - legendSpacing)
+            .text(function(d) { return d; });
+
+        });
+
+      })(window.d3);
+	  
+    </script>
+	</td></tr>
+	<tr>
+	<td></td>
+	<td>
+	<p><font face="times new roman">
+	<h3>Analysis and Findings</h3>
+	<li type="disc">For the Pie chart shown above, the file class_query.csv is taken as input file. The file has different type of inputs as timestamp, intention, query terms and user id.
+	<li type="disc">The file mentions various intentions as Knowledge Seeking(KS), Problem solving(PS), Method Learning (ML) and Others (NA)
+	<li type="disc">Each user search the web based on the particular intention and this pie chart shows the percentage of clicks for each intention category.
+	<li type="disc">Further more, the interaction is provided to the user that if the user hovers the mouse over the pie chart section, then he can see the total number of clicks for that particular intention and also the percentage relative to the clicks of other intentions.
+	<li type="disc">After this, since there are not many users having clicked on all the intentions, there is a feature provided in the center of pie chart where if the user clicks on small square depicting the particular intention, then the same gets disappear and the user can now analyse the data with the remaining intentions.
+	<ul type="disc">With this pie chart visualization, the following findings can be deduced :
+	<li type="circle">Clicks for KS intention = 285 (39.3%)
+	<li type="circle">Clicks for NA intention = 253 (34.8%)
+	<li type="circle">Clicks for PS intention = 96 (13.2%)
+	<li type="circle">Clicks for ML intention = 92 (12.7%)
+	
+	</ul>
+	</font></p>
+	</td>
+	</tr>
+	  </table>
+  </body>
+
+</html>
